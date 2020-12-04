@@ -1,8 +1,153 @@
 ---
 title: "Project 1"
-author: "Me"
-date: "2020-12-01"
-output: html_document
+author: "Cassidy Ellis"
+date: "10/3/2020"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
 ---
 
-## Test Project 1
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F, tidy=T, fig.width=15, fig.height=8, tidy.opts=list(width.cutoff=50), R.options=list(max.print=100,dplyr.print_max=100))
+
+library(tidyverse)
+library(dplyr)
+obesity <- read_csv("obesity-cleaned.csv")
+covid <- read_csv("covid_19_clean_complete.csv")
+covid %>% glimpse()
+obesity %>% glimpse()
+```
+
+# Introduction
+> For this project, I chose a dataset of COVID-19 statistics and a dataset of obesity among adults by country. The variables contained in the COVID-19 dataset are province/state, country/region, longitude, latitude, number of confirmed cases, number of deaths, number recovered, number active, and WHO region. The obesity dataset contains country, year, obesity % among adults, sex, and the oservation number (X1). I expect COVID-19 variables to be correlated with one another, such as confirmed cases and deaths, but I do not have any expectations for the relationship between mean obesity and COVID-19 data. I chose these datasets because these are two prevalent health conditions/diseases in our world today, and I am interested to dive into the releationships between them. 
+
+# 1. Tidying: Rearranging Wide/Long
+
+##### Both of the datasets I found for this project are tidy. Every variable has its own column and every observation has its own row. I made them untidy with pivot_wider() and then made them tidy again pivot_longer(). Below, I made the covid dataset untidy by using pivot_longer() to combine the latitude and longitude variables into a single name column and values column, then I made it tidy again by using pivot_wider() to make the variables their own columns again.
+
+```{R}
+coviduntidy <- covid %>% pivot_longer(cols=c(Lat, Long), names_to="name", values_to="value")
+coviduntidy %>% pivot_wider(names_from="name", values_from="value")
+```
+
+##### I made the obesity dataset untidy by using pivot_wider() to combine the country and sex variables into one name column with a values column of their data. I then made the dataset tidy again by using pivot_wider() to give country and year their own columns again, with their respective values in each column. I also chose to remove the sex variable and filter "Year" to the most recent year (2016), so my datasets would join more easily and make sense together. Finally, I used mutate() and recode() to rename the countries that had a different name in both datasets, since this is the variable I will be joining by.
+
+``` {R}
+obesityuntidy <- obesity %>% pivot_longer(cols=c(Country, Sex), names_to="name", values_to="value")
+obesityuntidy %>% pivot_wider(names_from="name", values_from="value")  
+
+obesityfinal <- obesity %>% select(-Sex) %>% filter(Year==2016) %>% mutate(Country=recode(Country, `United States of America`="US", Taiwan="Taiwan*",`Iran (Islamic Republic of)`= "Iran", `Russian Federation`="Russia", `United Kingdom of Great Britain and Northern Ireland`="United Kingdom", Congo="Congo (Kinshasa)", `Venezuela (Bolivarian Republic of)`="venezuela", `Brunei Darussalam`="Brunei", `Côte d'Ivoire`= "Cote d'Ivoire", `Bolivia (Plurinational State of)`="Bolivia"))
+obesityfinal %>% glimpse()
+```
+
+# 2. Joining/Merging
+
+##### I joined the two datasets by country, since this is the variable they both had in common and I wanted to align the obesity and covid data by country. I did a left_join(), with the covid dataset on the left, because I wanted to retain all of the data from the covid dataset. It joins everything from the dataset on the right to the dataset on the left, joining by country. There were 585 observations in the obesity dataset and 49,068 observations in the covid dataset, and there were 140,812 observations in the joined dataset, which will decrease to 24,138 after data wrangling to narrow this down to the important data. The observations that were dropped from the obesity dataset after joining were ones with countries that were not included in the covid dataset.
+
+``` {R}
+joined <- covid %>% left_join(obesityfinal, by=c("Country/Region"="Country"))  
+joined %>% glimpse()
+```
+
+# 3. Wrangling
+
+##### I used the six core dplyr functions to manipulate my joined dataset and make it easier to read. First, I filtered out the rows where the confirmed cases, deaths, and recovered cases were all equal to zero. I then grouped by country and date and used mutate() to sum up the covid cases that occurred in different states/provinces of the same country on the same date, so there would be one combined number for each of these variables per date by country. Then, I used select() to remove the variables Province/State, X1, lat, and long, since these were not relevant to my exploration of the data. I named the new dataset "joined2".
+
+##### Then, I wanted to create a new column to find the average obesity per country. I first separated the values in the Obesity (%) column so that there would only be the percentage numbers, with the range in brackets no longer included, and I removed the column that would become the obesity ranges in brackets. I then used mutate() to create a new column called "Mean Obesity (%)" by taking the mean of Obesity (%) per country. I removed repeated rows using distinct(), and arranged the data from greatest mean obesity to least mean obesity. I named this version of the data "joined3". 
+
+#####I also chose to use summarize_if() after grouping by date to explore the distinct number of observations per date. This shows the number of countries that have distinct values for each date. For example, there were only 3 different values for confirmed cases on January 22, 2020, but there were 165 distinct values for confirmed cases by July 27, 2020. 
+
+``` {R}
+joined2 <- joined %>% filter((Confirmed+Deaths+Recovered)!=0) %>% group_by(`Country/Region`, Date) %>% mutate("Confirmed"=sum(Confirmed), "Deaths"=sum(Deaths), "Recovered"=sum(Recovered), "Active"=sum(Active)) %>% select(-'Province/State',-'X1',-'Lat',-'Long') 
+joined2 %>% glimpse()
+
+joined3 <- joined2 %>% separate('Obesity (%)', into=c("Obesity (%)", "x"), sep=3) %>% select(-"x") %>% group_by(`Country/Region`) %>% mutate("Mean Obesity (%)"=mean(as.numeric(`Obesity (%)`), na.rm=T)) %>% select(-'Obesity (%)') %>% arrange(desc(`Mean Obesity (%)`)) %>% na.omit() %>% distinct()
+joined3 %>% glimpse() 
+
+joined3 %>% group_by(Date) %>% summarize_if(is.numeric, n_distinct)
+````
+
+
+##### Below, I created summary statistics for my numeric variables. I first summarized my data by finding and displaying the mean and standard deviation for all of the numeric values. This automatically grouped the data alphabetically by country, which allows me to see the means and standard deviation of covid cases and obesity percentage per country. Then, I chose to summarize my data by finding the minimum, median, and maximum values for the numeric variables, after grouping by date. This allows me to see and compare the data from January 2020 through July of 2020. I did one more summarizing line of code, where I grouped by country/region and WHO region, then found the variance in the numeric covid variables. I thought it was particularly interesting to see how the variance in variables varied between different countries and regions. After that, I used cor() to show a correlation matrix of confirmed COVID cases, deaths, recovered cases, active cases, and mean obesity. This correlation matrix shows high correlations between the covid vairables, especially confirmed and active cases (0.9497183), as one would expect. It also showed low correlation between mean obesity and all of the covid variables.
+
+``` {R}
+joined3 %>% summarize(mean(Confirmed), sd(Confirmed), mean(Deaths), sd(Deaths), mean(Recovered), sd(Recovered), mean(Active), sd(Active), mean(`Mean Obesity (%)`)) 
+
+joined3 %>% group_by(Date) %>% summarize(min(Confirmed), median(Confirmed), max(Confirmed), min(Deaths), median(Deaths), max(Deaths), min(Active), median(Active), max(Active))
+
+joined3 %>% group_by(`Country/Region`,`WHO Region`) %>% summarize(var(Confirmed), var(Active), var(Deaths), var(Recovered))
+
+cor_joined3 <- joined3 %>% ungroup() %>% select(-`Country/Region`,-Date,-Year, -`WHO Region`) %>% cor()
+cor_joined3 %>% glimpse()
+```
+
+# 4. Visualizing
+
+##### I created a heatmap of my previous correlation matrix using ggcorr(). This heatmap shows that the confirmed COVID-19 cases, deaths, recovered cases, and active cases are all highly correlated. However, mean obesity of adults does not seem to have any significant correlation with any of the COVID-19 statistics. I expected correlation between the COVID-19 variables, since they are all related, but I didn't expect much of a correlation between mean obesity and these variables. Even though there was no correlation between mean obesity and COVID-19 case data, it was still interesting to explore and to display the data.
+
+``` {R}
+cor_joined3 %>% as.data.frame %>% rownames_to_column("Variable_1") %>% 
+      pivot_longer(-1, names_to="Variable_2",values_to="Correlation") %>% 
+      ggplot(aes(x=Variable_1, y=Variable_2, fill=Correlation)) + geom_tile() + 
+      scale_fill_gradient(low="red", high="blue")+
+      geom_text(aes(label=round(Correlation,2)),color = "white", size = 4)+ 
+      theme(axis.text.x = element_text(angle = 90, hjust = 1))+ coord_fixed() + ggtitle("Correlation Heatmap")
+````
+
+##### Below, I creates a scatterplot of maximum confirmed COVID-19 cases per country and mean obesity (%) in adults per country. There were a lot of countries in my dataset, so instead of coloring the data points by country, I colored them by WHO Region, which will still allow me to see the data grouped by location. This graph is interesting because you can see the mean obesity and confirmed cases in countries, grouped by their World Health Organization region. For example, you can see that African countries are generally located on the left side of the graph, with lower mean obesities in adults and with most of their confirmed COVID-19 cases between 1,000 and 100,000. The Americas and Europe, on the other hand, have higher mean obesities than Africa and more spread out values of maximum number of COVID-19 cases along the y-axis per country. South-East Asia countries also have low mean obesities like Africa, but have a greater range in maximum confirmed COVID-19 cases.
+
+``` {R}
+joined3 %>% group_by(`Country/Region`, `Mean Obesity (%)`, `WHO Region`) %>% summarize(max_confirmed=max(Confirmed)) %>%
+ggplot(aes(x=`Mean Obesity (%)`, y=max_confirmed, color=`WHO Region`))+
+geom_point(size=1.5) + theme(legend.position="right")+
+ylab("Maximum Confirmed COVID Cases (log scaled)")+
+xlab("Mean Obesity of Adults (%)") + scale_y_log10()+
+scale_x_continuous(breaks = seq(4,40,5)) + theme_light() + ggtitle("Mean Obesity and Max COVID-19 Cases by WHO Region") 
+```
+
+
+
+##### I created a bar plot below of the deaths by COVID-19 per country/region, and colored the bars by WHO Region. Then, I used facet_wrap() to display the data by month of 2020. I wanted to see the difference in countries' deaths due to COVID across the months of 2020. According to the graph, countries in the Americas seem to have higher death counts, with countries in Europe having the next highest. By looking at the earlier months, such as February and March, one can see which countries gained the most COVID-19 deaths first. For example, the only country with deaths over 2700 in February was China, which is shown by the pink bar. In March, a few other countries appear to have more than 2700 deaths, including France, Iran, Italy, Spain, and the US.
+
+``` {R}
+joined %>% group_by(`Country/Region`) %>% filter(Deaths>2700) %>% 
+        separate(Date, into=c("Year", "Month", "Day"), sep="-") %>% 
+        separate(Month, into=c("x","month"), sep=1) %>% select(-x) %>%
+        ggplot(aes(`Country/Region`,Deaths, fill=`WHO Region`)) + 
+        geom_bar(stat="summary", fun=mean) +
+        theme(axis.text.x = element_text(angle=45,hjust=1), legend.position = "right") +   
+        ggtitle("COVID-19 Deaths by Country per Month") + scale_y_log10() + 
+        geom_errorbar(stat="summary", fun.data=mean_se) +   
+        facet_wrap(~month) 
+```
+
+# 5. Clustering
+
+##### Below, I performed PAM clustering and created a plot to display the clustering. I created a dataset called joined_clustering with 5 numeric variables that are the means of existing variables and scaled the numeric variables. Then, I converted the standard deviations to eigenvalues and found the proportion of variance explained by the principle components. I created a plot to display the results of this analysis, which shows proportion of variance on the y-axis explained by each principle component on the x axis. The proportion explained by principle component 1 is 0.73, the proportion explained by PC2 is 0.19, and the proportions explained by PC3 and 4 are 0.06 and 0.02. The sum of the proportion of variance of principle components 1 and 2 was over 0.8, so I chose to use these two principle components to create a dataframe of and plot scores. From looking at the summary, PC1 has all similar strengths and magnitudes, and a low score on PC2 means a high mean obesity. In the graph, the points seem to be spread out a lot more along PC2, with points lower on PC2 having higher mean obesities.
+
+``` {R}
+joined_clustering <- joined3 %>% group_by(`Country/Region`) %>% summarize(meanconfirmed=mean(Confirmed), meandeaths=mean(Deaths), meanrecovered=mean(Recovered), meanactive=mean(Active), meanobesity=mean(`Mean Obesity (%)`))
+joined_clustering %>% head()
+a <-joined_clustering %>% ungroup() %>% mutate_if(is.character, as.factor) %>% select_if(is.numeric) %>% scale 
+rownames(a) <-joined_clustering$"Country/Region"
+pca <-princomp(a)
+names(pca)
+summary(pca, loadings=T)
+eigval <-pca$sdev^2 
+varprop=round(eigval/sum(eigval), 2)
+
+ggplot() + geom_bar(aes(y=varprop, x=1:5), stat="identity") + xlab("Principle Component") + 
+  geom_path(aes(y=varprop, x=1:5)) + 
+  geom_text(aes(x=1:5, y=varprop, label=round(varprop, 2)), vjust=1, col="white", size=5) + 
+  scale_y_continuous(breaks=seq(0, .6, .2), labels = scales::percent) + 
+  scale_x_continuous(breaks=1:10) + ggtitle("Principal Component Analysis")
+
+dataframe <- data.frame(PC1=pca$scores[,1], PC2=pca$scores[,2]) %>% rownames_to_column("Country/Region")
+dataframe %>% ggplot(aes(PC1,PC2)) + geom_point() 
+```
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

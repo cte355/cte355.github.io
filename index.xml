@@ -17,24 +17,6 @@
     </item>
     
     <item>
-      <title>Project 1</title>
-      <link>/project/project1/</link>
-      <pubDate>Tue, 01 Dec 2020 00:00:00 +0000</pubDate>
-      
-      <guid>/project/project1/</guid>
-      <description> Test Project 1  </description>
-    </item>
-    
-    <item>
-      <title>Project 2</title>
-      <link>/project/project2/</link>
-      <pubDate>Tue, 01 Dec 2020 00:00:00 +0000</pubDate>
-      
-      <guid>/project/project2/</guid>
-      <description> Test Project 2  </description>
-    </item>
-    
-    <item>
       <title>Hello R Markdown</title>
       <link>/post/2015/07/23/hello-r-markdown/</link>
       <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
@@ -43,6 +25,24 @@
       <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
 You can embed an R code chunk like this:
 summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
+    </item>
+    
+    <item>
+      <title>Project 1</title>
+      <link>/project/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Introduction  For this project, I chose a dataset of COVID-19 statistics and a dataset of obesity among adults by country. The variables contained in the COVID-19 dataset are province/state, country/region, longitude, latitude, number of confirmed cases, number of deaths, number recovered, number active, and WHO region. The obesity dataset contains country, year, obesity % among adults, sex, and the oservation number (X1). I expect COVID-19 variables to be correlated with one another, such as confirmed cases and deaths, but I do not have any expectations for the relationship between mean obesity and COVID-19 data.</description>
+    </item>
+    
+    <item>
+      <title>Project 2</title>
+      <link>/project/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>0. Introduction heartfailure &amp;lt;- read_csv(&amp;quot;heart_failure.csv&amp;quot;) heartfailure &amp;lt;- heartfailure %&amp;gt;% select(-time) head(heartfailure) ## # A tibble: 6 x 12 ## age anaemia creatinine_phos… diabetes ejection_fracti… high_blood_pres… platelets ## &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; ## 1 75 0 582 0 20 1 265000 ## 2 55 0 7861 0 38 0 263358. ## 3 65 0 146 0 20 0 162000 ## 4 50 1 111 0 20 0 210000 ## 5 65 1 160 1 20 0 327000 ## 6 90 1 47 0 40 1 204000 ## # … with 5 more variables: serum_creatinine &amp;lt;dbl&amp;gt;, serum_sodium &amp;lt;dbl&amp;gt;, sex &amp;lt;dbl&amp;gt;, smoking &amp;lt;dbl&amp;gt;, ## # DEATH_EVENT &amp;lt;dbl&amp;gt; For this project, I chose a dataset from www.</description>
     </item>
     
     <item>

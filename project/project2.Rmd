@@ -1,8 +1,255 @@
 ---
 title: "Project 2"
-author: "Me"
-date: "2020-12-01"
+author: "Cassidy Ellis cte355"
+date: "11/21/2020"
 output: html_document
 ---
 
-## Test Project 2
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+library(dplyr)
+library(plotROC)
+library(pROC)
+library(interactions)
+library(lmtest)
+library(sandwich)
+library(glmnet)
+```
+
+## 0. Introduction
+
+```{R}
+heartfailure <- read_csv("heart_failure.csv")
+heartfailure <- heartfailure %>% select(-time)
+head(heartfailure)
+```
+
+*For this project, I chose a dataset from www.kaggle.com called "Heart Failure Clinical Records Dataset." I chose this dataset because I have always been intrigued by medical data and diseases that affect humans, and collecting data on these diseases is crucial to advancing science and medical understanding. Also, cardiovascular disease is the #1 cause of death in the world, so it is very important to research and collect data on. There are 299 observations and 13 variables, which include age, anaemia (boolean), which is determined by a decrease in red blood cells, creatinine_phosphokinase (mcg/L), which is the level of the CPK enzyme in the patient's blood, diabetes (boolean), ejection_fraction, which is the percentage of blood leaving the heart at each contraction (%), high_blood_pressure (boolean), platelet count in the blood (kiloplatelets/mL), serum_creatinine, which is the level of serum creatinine in the blood (mg/dL), serum_sodium, which is the level of serum sodium in the blood (mEq/L), sex (0 for woman and 1 for man), smoking (0 for doesn't smoke and 1 for smokes), time, and DEATH_EVENT, which is whether or not the patient died (0 for survived and 1 for died). I decided to remove the variable 'time' from the dataset, since the data description did not say what the units of this variable were.*
+
+## 1. MANOVA
+
+```{R}
+manova<-manova(cbind(creatinine_phosphokinase,ejection_fraction,
+               serum_creatinine,serum_sodium)~anaemia,data=heartfailure)
+summary(manova)
+summary.aov(manova)
+heartfailure %>% group_by(anaemia) %>% summarize(mean(creatinine_phosphokinase))
+pairwise.t.test(heartfailure$creatinine_phosphokinase, heartfailure$anaemia, p.adj="none")
+0.05/6
+```
+
+*In this MANOVA test, I chose to test whether the means of creatinine_phosphokinase, ejection_fraction, serum_sodium, and serum_creatinine differed across patients who had anaemia and ones who didn't. The p-value for the MANOVA test was 0.01144, which is less than 0.05, meaning that at least one of these variables does differ significantly among anaemia. I then performed one-way ANOVAs for each of these variables, which showed that the mean level of CPK enzyme in the blood did differ among anaemia. Then, I did a post-hoc t test to determine which group differed. After calculating the bonferonni correction (0.05/6 tests= 0.00833) for doing 1 MANOVA, 4 ANOVAs, and 1 post-hoc t test, the mean CPK enzyme levels were still significantly lower in patients with anaemia (0.00092<0.00833). The MANOVA assumptions of random sampling and independent observations were met, since the data was sampled randomly from separate patients. We also assume that the assumptions of linear relationships among dependent variables, homogeneity of within-group covariance matrices are all met. However, multicollinearity and multivariate normality may be violated since we expect many of these variables to be related/correlated to one another, and no extreme outliers may also be violated because we did not filter out any extreme outliers.*
+
+## 2. Randomization Test
+
+```{R}
+heartfailure %>% group_by(high_blood_pressure) %>% summarize(average=mean(age)) %>% summarize(meandiff=diff(average))
+
+rand <- vector()
+for(i in 1:5000){
+new<-data.frame(age=sample(heartfailure$age),bp=heartfailure$high_blood_pressure)
+rand[i]<-mean(new[new$bp=="0",]$age)-
+            mean(new[new$bp=="1",]$age)}
+
+mean(rand>2.320784 | rand< -2.320784) 
+t.test(data=heartfailure,age~high_blood_pressure)
+
+{hist(rand, main="Null Distribution", ylab="Frequency", xlim=c(-3,3)); abline(v = c(-2.320784, 2.320784), col="red")}
+```
+
+*H0: Mean age is the same between patients with high blood pressure and patients without high blood pressure.*
+*Ha: Mean age differs between patients with high blood pressure and patients without high blood pressure.*
+
+*I performed a randomization to test whether age differs significantly among those with high blood pressure and those without high blood pressure. The resulting p-value was 0.1046, which is greater than 0.05, so I fail to reject the null hypothesis and conclude that mean age does not differ among patients with and without high blood pressure in this specific study. I then did a Welch t-test comparing the mean age in patients with and without blood pressure and the p-value from this was 0.1031 (>0.05).*
+
+## 3. Linear Regression Model
+
+```{R}
+#Mean centering numeric variables
+heartfailure$serum_creatinine_c <- heartfailure$serum_creatinine - mean(heartfailure$serum_creatinine)
+heartfailure$serum_sodium_c <- heartfailure$serum_sodium - mean(heartfailure$serum_sodium)
+
+#Linear regression model
+fit <- lm(ejection_fraction ~ serum_creatinine_c * serum_sodium_c, data=heartfailure)
+summary(fit)
+
+#Plotting the regression
+interact_plot(fit, pred = serum_sodium_c, modx = serum_creatinine_c, plot.points = TRUE)
+
+#Testing assumptions
+resids<-fit$residuals
+fitvals<-fit$fitted.values
+ggplot()+
+  geom_point(aes(fitvals,resids))+
+  geom_hline(yintercept=0, col="red")
+
+ggplot()+
+  geom_qq(aes(sample=resids))+
+  geom_qq_line(aes(sample=resids), color='red')
+
+bptest(fit)
+
+#Regression with robust SEs
+coeftest(fit, vcov = vcovHC(fit))[,1:2]
+```
+
+*I created a linear regression model to predict the ejection_fraction (amount of blood pumped out of the heart during one contraction) in patients, from serum creatinine and serum sodium levels in the blood, after mean-centering the two predictor variables. The intercept was 38.3099 which is the predicted ejection fraction when the serum sodium and creatinine levels are zero, the coefficient for serum_creatinine_c is 0.501 which is the increase in ejection fraction for every one unit increase in serum creatinine, after controlling for serum sodium (p-value>0.05), the coefficient for serum_sodium_c is 0.4063 which means ejection fraction increases 0.4063 for every one unit increase in serum sodium, after controlling for serum creatinine (p-value<0.05), and the coefficient for the interaction between the two numeric variables is 0.263 (p-value>0.05). The p-values for the intercept (2e-16) and serum_sodium_c (0.0121) were significant. I then used the interactions package to plot this regression, where you can see the positive relationship between the predictor variables and ejection_fraction. The assumptions of linearity, normality, and homoskedasticity are met from looking at the plots made to test these assumptinos. I then recomputed the regression using robust standard errors, which did not change any of the values. The proportion of variation in the outcome my model explains is 4.29%.*
+
+## 4. Linear Regression Model with Bootstrapped Standard Errors
+
+```{R}
+samp_distn<- replicate(5000, {
+  bootstrap<- heartfailure %>% sample_frac(replace=TRUE)
+  fit<-lm(ejection_fraction ~ serum_creatinine_c * serum_sodium_c, data=bootstrap)
+  coef(fit)
+})
+
+samp_distn %>% t %>% as.data.frame %>% summarize_all(sd)
+```
+
+*Above, I reran the same linear regression model, but calculated bootstrapped standard errors by resampling observations. All of the standard errors changed from the regression with robust SEs. They also changed from the original SEs, since these were the same as the robust SEs. The intercept SE from the robust SEs was 0.70 and the intercept SE from the bootstrapped standard errors was 0.711. The serum creatinine, serum sodium, and their interaction from the robust SEs were 1.014, 0.175, and 0.126, respectively, and their bootstrapped standard errors were 1.073, 0.172, and 0.1685.*
+
+## 5. Predicting a Binary Variable from Explanatory Variables
+
+```{R}
+#Logistic Regression
+fit2<-glm(DEATH_EVENT ~ ejection_fraction + serum_sodium, data=heartfailure, family=binomial(link="logit"))
+coeftest(fit2)
+exp(coef(fit2)) %>% round(3)
+
+#Confusion Matrix
+heartfailure$probs<-predict(fit2,type="response")
+pred<-ifelse(heartfailure$probs>.5,1,0)
+table(predict=pred,truth=heartfailure$DEATH_EVENT)%>%addmargins
+
+#Accuracy= 0.719
+(192+23)/299
+#Sensitivity (TPR)= 0.946
+192/203
+#Specificity (TNR)= 0.240
+23/96
+#Precision (PPV)= 0.724
+192/265
+
+#Plot
+heartfailure$logit<-predict(fit2,type="link")
+
+heartfailure%>%ggplot()+
+  geom_density(aes(logit, fill=as.factor(DEATH_EVENT)), alpha=.4)+
+  theme(legend.position=c(.85,.85))+
+  geom_vline(xintercept=0)+xlab("logit (log-odds)")+ ggtitle("Density Plot")
+
+#ROC
+ROCplot<-ggplot(heartfailure)+geom_roc(aes(d=DEATH_EVENT, m=probs), n.cuts=0)+geom_segment(aes(x=0,xend=1,y=0,yend=1),lty=2)
+ROCplot
+
+#AUC
+calc_auc(ROCplot)
+```
+
+*Since the deaths of patients with heart failure is a binary variable and is the main focus of the research done for this dataset, I decided to predict this binary variable with ejection_fraction, or the percent of blood ejected from the patient's heart during each contraction, and the sodium level in serum. Every p-value from this logistic regression was significant. The intercept is 11.912, meaning when ejection_fraction and serum_sodium are 0 the log odds of death occurring is 11.912, the ejection_fraction coefficient is -0.0516, and the serum_sodium coefficient is -0.07895. I then created a confusion matrix, from which the accuracy was 0.719, the sensitivity was 0.946, the specificity was 0.240, the precision was 0.724, and the AUC was 0.702. I made a density plot which shows the proportion of patients who did not die that the model predicted as dead (gray area right of 0) and the proportion of patients who died that the model predicted did not die (gray area to the left of 0), as well as the true positives and true negatives, and a ROC plot that shows sensitivity against specificty. My ROC plot is not close to one that would yield an AUC close to 1.0, but it is significantly above the line with a slope of 1. The AUC of the model, calculated from the ROC plot, was 0.702, which is fair, but not good or great.*
+
+##  6. Predicting a Binary Variable from All Variables
+
+```{R}
+fit3<-glm(DEATH_EVENT~ejection_fraction+serum_sodium+serum_creatinine+platelets+creatinine_phosphokinase+age,data=heartfailure,family="binomial")
+summary(fit3)
+exp(coef(fit3))%>%round(3)
+
+#Confusion Matrix
+heartfailure$prob3 <- predict(fit3, type="response")
+heartfailure$pred3 <- ifelse(heartfailure$prob3>0.5,1,0)
+table(truth=heartfailure$DEATH_EVENT, prediction=heartfailure$pred3>0.5) %>% addmargins
+  
+class_diag<-function(probs,truth){
+
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  prediction<-ifelse(probs>.5,1,0)
+  acc=mean(truth==prediction)
+  sens=mean(prediction[truth==1]==1)
+  spec=mean(prediction[truth==0]==0)
+  ppv=mean(truth[prediction==1]==1)
+  f1=2*(sens*ppv)/(sens+ppv)
+  
+   if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) {truth<-as.numeric(truth)-1}
+  
+  #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+class_diag(heartfailure$prob3, heartfailure$DEATH_EVENT)
+
+#10-fold CV
+k=10
+data<-heartfailure[sample(nrow(heartfailure)),]
+folds<-cut(seq(1:nrow(heartfailure)),breaks=k,labels=F)
+  
+diags<-NULL
+for(i in 1:k){
+  train<-data[folds!=i,] 
+  test<-data[folds==i,]
+  truth<-test$DEATH_EVENT
+  fit3<-glm(DEATH_EVENT~ejection_fraction+serum_sodium+serum_creatinine+platelets+creatinine_phosphokinase+age,data=heartfailure,family="binomial")
+  probs<-predict(fit3,newdata = test,type="response")
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+
+summarize_all(diags,mean)
+
+#LASSO
+heartfailure2 <- heartfailure %>% select(-"smoking",-"sex",-"anaemia",-"diabetes",-"high_blood_pressure")
+y<-as.matrix(heartfailure2$DEATH_EVENT) #grab response
+x<-model.matrix(DEATH_EVENT~.,data=heartfailure2)[,-1] #grab predictors
+x <- scale(x)
+head(x)
+
+cv<-cv.glmnet(x,y,family="binomial")
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(lasso)
+
+k=10
+data <- heartfailure2 %>% sample_frac #put rows of dataset in random order
+folds <- ntile(1:nrow(data),n=10) #create fold labels
+diags<-NULL
+for(i in 1:k){
+  train <- data[folds!=i,] #create training set (all but fold i)
+  test <- data[folds==i,] #create test set (just fold i)
+  truth <- test$DEATH_EVENT #save truth labels from fold i
+  fit <- glm(DEATH_EVENT~age+serum_creatinine,
+             data=train, family="binomial")
+  probs <- predict(fit, newdata=test, type="response")
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+
+diags%>%summarize_all(mean)
+
+```
+
+*Above, I did another logistic regression predicting the death of patients with heart failure, this time using all of the numeric variables. The accuracy, found from a confusion matrix of the model, is 0.769, the sensitivity is 0.458, the specificity is 0.916, the precision is 0.721, and the AUC is 0.797, which means the performance of this model is fair. I then did a 10-fold CV with the same model, and calculated an accuracy of 0.769, a sensitivity of 0.473, a specificity of 0.916, a precision of 0.711, and an AUC of 0.787. These values were different from the in-sample classification diagnostics, besides the accuracy and specificity. The AUC of the out-of-sample classification diagnostics was slightly lower than the in-sample AUC. I then did a LASSO regression with the same model, and the variables that were retained were age and serum_creatinine. Lastly, I performed another 10-fold CV using the variables selected from the LASSO, and found an AUC of 0.7164, which is less than the other two AUCs of 0.797 and 0.787, but still fair.*

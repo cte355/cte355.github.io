@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="author" content="Cassidy Ellis" />
+    <meta name="author" content="Cassidy Elliss" />
     
     <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
     <title>Project 1</title>
@@ -60,7 +60,7 @@
  
 <div class="blog-title">
           <h4>
-         December 1, 2020 
+         January 1, 0001 
             &nbsp;&nbsp;
             
           </h4>
@@ -72,8 +72,320 @@
               
 
 
-<div id="test-project-1" class="section level2">
-<h2>Test Project 1</h2>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<blockquote>
+<p>For this project, I chose a dataset of COVID-19 statistics and a dataset of obesity among adults by country. The variables contained in the COVID-19 dataset are province/state, country/region, longitude, latitude, number of confirmed cases, number of deaths, number recovered, number active, and WHO region. The obesity dataset contains country, year, obesity % among adults, sex, and the oservation number (X1). I expect COVID-19 variables to be correlated with one another, such as confirmed cases and deaths, but I do not have any expectations for the relationship between mean obesity and COVID-19 data. I chose these datasets because these are two prevalent health conditions/diseases in our world today, and I am interested to dive into the releationships between them.</p>
+</blockquote>
+</div>
+<div id="tidying-rearranging-widelong" class="section level1">
+<h1>1. Tidying: Rearranging Wide/Long</h1>
+<div id="both-of-the-datasets-i-found-for-this-project-are-tidy.-every-variable-has-its-own-column-and-every-observation-has-its-own-row.-i-made-them-untidy-with-pivot_wider-and-then-made-them-tidy-again-pivot_longer.-below-i-made-the-covid-dataset-untidy-by-using-pivot_longer-to-combine-the-latitude-and-longitude-variables-into-a-single-name-column-and-values-column-then-i-made-it-tidy-again-by-using-pivot_wider-to-make-the-variables-their-own-columns-again." class="section level5">
+<h5>Both of the datasets I found for this project are tidy. Every variable has its own column and every observation has its own row. I made them untidy with pivot_wider() and then made them tidy again pivot_longer(). Below, I made the covid dataset untidy by using pivot_longer() to combine the latitude and longitude variables into a single name column and values column, then I made it tidy again by using pivot_wider() to make the variables their own columns again.</h5>
+<pre class="r"><code>coviduntidy &lt;- covid %&gt;% pivot_longer(cols = c(Lat, 
+    Long), names_to = &quot;name&quot;, values_to = &quot;value&quot;)
+coviduntidy %&gt;% pivot_wider(names_from = &quot;name&quot;, values_from = &quot;value&quot;)</code></pre>
+<pre><code>## # A tibble: 49,068 x 10
+##    `Province/State` `Country/Region` Date       Confirmed Deaths Recovered
+##    &lt;chr&gt;            &lt;chr&gt;            &lt;date&gt;         &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;
+##  1 &lt;NA&gt;             Afghanistan      2020-01-22         0      0         0
+##  2 &lt;NA&gt;             Albania          2020-01-22         0      0         0
+##  3 &lt;NA&gt;             Algeria          2020-01-22         0      0         0
+##  4 &lt;NA&gt;             Andorra          2020-01-22         0      0         0
+##  5 &lt;NA&gt;             Angola           2020-01-22         0      0         0
+##  6 &lt;NA&gt;             Antigua and Bar… 2020-01-22         0      0         0
+##  7 &lt;NA&gt;             Argentina        2020-01-22         0      0         0
+##  8 &lt;NA&gt;             Armenia          2020-01-22         0      0         0
+##  9 Australian Capi… Australia        2020-01-22         0      0         0
+## 10 New South Wales  Australia        2020-01-22         0      0         0
+## # … with 49,058 more rows, and 4 more variables: Active &lt;dbl&gt;, `WHO
+## #   Region` &lt;chr&gt;, Lat &lt;dbl&gt;, Long &lt;dbl&gt;</code></pre>
+</div>
+<div id="i-made-the-obesity-dataset-untidy-by-using-pivot_wider-to-combine-the-country-and-sex-variables-into-one-name-column-with-a-values-column-of-their-data.-i-then-made-the-dataset-tidy-again-by-using-pivot_wider-to-give-country-and-year-their-own-columns-again-with-their-respective-values-in-each-column.-i-also-chose-to-remove-the-sex-variable-and-filter-year-to-the-most-recent-year-2016-so-my-datasets-would-join-more-easily-and-make-sense-together.-finally-i-used-mutate-and-recode-to-rename-the-countries-that-had-a-different-name-in-both-datasets-since-this-is-the-variable-i-will-be-joining-by." class="section level5">
+<h5>I made the obesity dataset untidy by using pivot_wider() to combine the country and sex variables into one name column with a values column of their data. I then made the dataset tidy again by using pivot_wider() to give country and year their own columns again, with their respective values in each column. I also chose to remove the sex variable and filter &quot;Year&quot; to the most recent year (2016), so my datasets would join more easily and make sense together. Finally, I used mutate() and recode() to rename the countries that had a different name in both datasets, since this is the variable I will be joining by.</h5>
+<pre class="r"><code>obesityuntidy &lt;- obesity %&gt;% pivot_longer(cols = c(Country, 
+    Sex), names_to = &quot;name&quot;, values_to = &quot;value&quot;)
+obesityuntidy %&gt;% pivot_wider(names_from = &quot;name&quot;, 
+    values_from = &quot;value&quot;)</code></pre>
+<pre><code>## # A tibble: 24,570 x 5
+##       X1  Year `Obesity (%)` Country     Sex       
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;       &lt;chr&gt;     
+##  1     0  1975 0.5 [0.2-1.1] Afghanistan Both sexes
+##  2     1  1975 0.2 [0.0-0.6] Afghanistan Male      
+##  3     2  1975 0.8 [0.2-2.0] Afghanistan Female    
+##  4     3  1976 0.5 [0.2-1.1] Afghanistan Both sexes
+##  5     4  1976 0.2 [0.0-0.7] Afghanistan Male      
+##  6     5  1976 0.8 [0.2-2.0] Afghanistan Female    
+##  7     6  1977 0.6 [0.2-1.2] Afghanistan Both sexes
+##  8     7  1977 0.2 [0.0-0.7] Afghanistan Male      
+##  9     8  1977 0.9 [0.3-2.1] Afghanistan Female    
+## 10     9  1978 0.6 [0.2-1.3] Afghanistan Both sexes
+## # … with 24,560 more rows</code></pre>
+<pre class="r"><code>obesityfinal &lt;- obesity %&gt;% select(-Sex) %&gt;% filter(Year == 
+    2016) %&gt;% mutate(Country = recode(Country, `United States of America` = &quot;US&quot;, 
+    Taiwan = &quot;Taiwan*&quot;, `Iran (Islamic Republic of)` = &quot;Iran&quot;, 
+    `Russian Federation` = &quot;Russia&quot;, `United Kingdom of Great Britain and Northern Ireland` = &quot;United Kingdom&quot;, 
+    Congo = &quot;Congo (Kinshasa)&quot;, `Venezuela (Bolivarian Republic of)` = &quot;venezuela&quot;, 
+    `Brunei Darussalam` = &quot;Brunei&quot;, `Côte d&#39;Ivoire` = &quot;Cote d&#39;Ivoire&quot;, 
+    `Bolivia (Plurinational State of)` = &quot;Bolivia&quot;))
+obesityfinal %&gt;% glimpse()</code></pre>
+<pre><code>## Rows: 585
+## Columns: 4
+## $ X1            &lt;dbl&gt; 123, 124, 125, 249, 250, 251, 375, 376, 377, 501, 502, …
+## $ Country       &lt;chr&gt; &quot;Afghanistan&quot;, &quot;Afghanistan&quot;, &quot;Afghanistan&quot;, &quot;Albania&quot;,…
+## $ Year          &lt;dbl&gt; 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2…
+## $ `Obesity (%)` &lt;chr&gt; &quot;5.5 [3.4-8.1]&quot;, &quot;3.2 [1.3-6.4]&quot;, &quot;7.6 [4.3-12.4]&quot;, &quot;21…</code></pre>
+</div>
+</div>
+<div id="joiningmerging" class="section level1">
+<h1>2. Joining/Merging</h1>
+<div id="i-joined-the-two-datasets-by-country-since-this-is-the-variable-they-both-had-in-common-and-i-wanted-to-align-the-obesity-and-covid-data-by-country.-i-did-a-left_join-with-the-covid-dataset-on-the-left-because-i-wanted-to-retain-all-of-the-data-from-the-covid-dataset.-it-joins-everything-from-the-dataset-on-the-right-to-the-dataset-on-the-left-joining-by-country.-there-were-585-observations-in-the-obesity-dataset-and-49068-observations-in-the-covid-dataset-and-there-were-140812-observations-in-the-joined-dataset-which-will-decrease-to-24138-after-data-wrangling-to-narrow-this-down-to-the-important-data.-the-observations-that-were-dropped-from-the-obesity-dataset-after-joining-were-ones-with-countries-that-were-not-included-in-the-covid-dataset." class="section level5">
+<h5>I joined the two datasets by country, since this is the variable they both had in common and I wanted to align the obesity and covid data by country. I did a left_join(), with the covid dataset on the left, because I wanted to retain all of the data from the covid dataset. It joins everything from the dataset on the right to the dataset on the left, joining by country. There were 585 observations in the obesity dataset and 49,068 observations in the covid dataset, and there were 140,812 observations in the joined dataset, which will decrease to 24,138 after data wrangling to narrow this down to the important data. The observations that were dropped from the obesity dataset after joining were ones with countries that were not included in the covid dataset.</h5>
+<pre class="r"><code>joined &lt;- covid %&gt;% left_join(obesityfinal, by = c(`Country/Region` = &quot;Country&quot;))
+joined %&gt;% glimpse()</code></pre>
+<pre><code>## Rows: 140,812
+## Columns: 13
+## $ `Province/State` &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+## $ `Country/Region` &lt;chr&gt; &quot;Afghanistan&quot;, &quot;Afghanistan&quot;, &quot;Afghanistan&quot;, &quot;Albani…
+## $ Lat              &lt;dbl&gt; 33.93911, 33.93911, 33.93911, 41.15330, 41.15330, 41…
+## $ Long             &lt;dbl&gt; 67.70995, 67.70995, 67.70995, 20.16830, 20.16830, 20…
+## $ Date             &lt;date&gt; 2020-01-22, 2020-01-22, 2020-01-22, 2020-01-22, 202…
+## $ Confirmed        &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ Deaths           &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ Recovered        &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ Active           &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ `WHO Region`     &lt;chr&gt; &quot;Eastern Mediterranean&quot;, &quot;Eastern Mediterranean&quot;, &quot;E…
+## $ X1               &lt;dbl&gt; 123, 124, 125, 249, 250, 251, 375, 376, 377, 501, 50…
+## $ Year             &lt;dbl&gt; 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2016…
+## $ `Obesity (%)`    &lt;chr&gt; &quot;5.5 [3.4-8.1]&quot;, &quot;3.2 [1.3-6.4]&quot;, &quot;7.6 [4.3-12.4]&quot;, …</code></pre>
+</div>
+</div>
+<div id="wrangling" class="section level1">
+<h1>3. Wrangling</h1>
+<div id="i-used-the-six-core-dplyr-functions-to-manipulate-my-joined-dataset-and-make-it-easier-to-read.-first-i-filtered-out-the-rows-where-the-confirmed-cases-deaths-and-recovered-cases-were-all-equal-to-zero.-i-then-grouped-by-country-and-date-and-used-mutate-to-sum-up-the-covid-cases-that-occurred-in-different-statesprovinces-of-the-same-country-on-the-same-date-so-there-would-be-one-combined-number-for-each-of-these-variables-per-date-by-country.-then-i-used-select-to-remove-the-variables-provincestate-x1-lat-and-long-since-these-were-not-relevant-to-my-exploration-of-the-data.-i-named-the-new-dataset-joined2." class="section level5">
+<h5>I used the six core dplyr functions to manipulate my joined dataset and make it easier to read. First, I filtered out the rows where the confirmed cases, deaths, and recovered cases were all equal to zero. I then grouped by country and date and used mutate() to sum up the covid cases that occurred in different states/provinces of the same country on the same date, so there would be one combined number for each of these variables per date by country. Then, I used select() to remove the variables Province/State, X1, lat, and long, since these were not relevant to my exploration of the data. I named the new dataset &quot;joined2&quot;.</h5>
+</div>
+<div id="then-i-wanted-to-create-a-new-column-to-find-the-average-obesity-per-country.-i-first-separated-the-values-in-the-obesity-column-so-that-there-would-only-be-the-percentage-numbers-with-the-range-in-brackets-no-longer-included-and-i-removed-the-column-that-would-become-the-obesity-ranges-in-brackets.-i-then-used-mutate-to-create-a-new-column-called-mean-obesity-by-taking-the-mean-of-obesity-per-country.-i-removed-repeated-rows-using-distinct-and-arranged-the-data-from-greatest-mean-obesity-to-least-mean-obesity.-i-named-this-version-of-the-data-joined3." class="section level5">
+<h5>Then, I wanted to create a new column to find the average obesity per country. I first separated the values in the Obesity (%) column so that there would only be the percentage numbers, with the range in brackets no longer included, and I removed the column that would become the obesity ranges in brackets. I then used mutate() to create a new column called &quot;Mean Obesity (%)&quot; by taking the mean of Obesity (%) per country. I removed repeated rows using distinct(), and arranged the data from greatest mean obesity to least mean obesity. I named this version of the data &quot;joined3&quot;.</h5>
+</div>
+<div id="i-also-chose-to-use-summarize_if-after-grouping-by-date-to-explore-the-distinct-number-of-observations-per-date.-this-shows-the-number-of-countries-that-have-distinct-values-for-each-date.-for-example-there-were-only-3-different-values-for-confirmed-cases-on-january-22-2020-but-there-were-165-distinct-values-for-confirmed-cases-by-july-27-2020." class="section level5">
+<h5>I also chose to use summarize_if() after grouping by date to explore the distinct number of observations per date. This shows the number of countries that have distinct values for each date. For example, there were only 3 different values for confirmed cases on January 22, 2020, but there were 165 distinct values for confirmed cases by July 27, 2020.</h5>
+<pre class="r"><code>joined2 &lt;- joined %&gt;% filter((Confirmed + Deaths + 
+    Recovered) != 0) %&gt;% group_by(`Country/Region`, 
+    Date) %&gt;% mutate(Confirmed = sum(Confirmed), Deaths = sum(Deaths), 
+    Recovered = sum(Recovered), Active = sum(Active)) %&gt;% 
+    select(-&quot;Province/State&quot;, -&quot;X1&quot;, -&quot;Lat&quot;, -&quot;Long&quot;)
+joined2 %&gt;% glimpse()</code></pre>
+<pre><code>## Rows: 112,133
+## Columns: 9
+## Groups: Country/Region, Date [27,138]
+## $ `Country/Region` &lt;chr&gt; &quot;China&quot;, &quot;China&quot;, &quot;China&quot;, &quot;China&quot;, &quot;China&quot;, &quot;China&quot;…
+## $ Date             &lt;date&gt; 2020-01-22, 2020-01-22, 2020-01-22, 2020-01-22, 202…
+## $ Confirmed        &lt;dbl&gt; 1644, 1644, 1644, 1644, 1644, 1644, 1644, 1644, 1644…
+## $ Deaths           &lt;dbl&gt; 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, …
+## $ Recovered        &lt;dbl&gt; 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, …
+## $ Active           &lt;dbl&gt; 1509, 1509, 1509, 1509, 1509, 1509, 1509, 1509, 1509…
+## $ `WHO Region`     &lt;chr&gt; &quot;Western Pacific&quot;, &quot;Western Pacific&quot;, &quot;Western Pacif…
+## $ Year             &lt;dbl&gt; 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2016…
+## $ `Obesity (%)`    &lt;chr&gt; &quot;6.2 [4.7-7.9]&quot;, &quot;5.9 [3.9-8.4]&quot;, &quot;6.5 [4.5-9.1]&quot;, &quot;…</code></pre>
+<pre class="r"><code>joined3 &lt;- joined2 %&gt;% separate(&quot;Obesity (%)&quot;, into = c(&quot;Obesity (%)&quot;, 
+    &quot;x&quot;), sep = 3) %&gt;% select(-&quot;x&quot;) %&gt;% group_by(`Country/Region`) %&gt;% 
+    mutate(`Mean Obesity (%)` = mean(as.numeric(`Obesity (%)`), 
+        na.rm = T)) %&gt;% select(-&quot;Obesity (%)&quot;) %&gt;% 
+    arrange(desc(`Mean Obesity (%)`)) %&gt;% na.omit() %&gt;% 
+    distinct()
+joined3 %&gt;% glimpse()</code></pre>
+<pre><code>## Rows: 24,138
+## Columns: 9
+## Groups: Country/Region [166]
+## $ `Country/Region`   &lt;chr&gt; &quot;Kuwait&quot;, &quot;Kuwait&quot;, &quot;Kuwait&quot;, &quot;Kuwait&quot;, &quot;Kuwait&quot;, …
+## $ Date               &lt;date&gt; 2020-02-24, 2020-02-25, 2020-02-26, 2020-02-27, 2…
+## $ Confirmed          &lt;dbl&gt; 3, 33, 78, 129, 135, 135, 135, 168, 168, 168, 174,…
+## $ Deaths             &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ Recovered          &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 6,…
+## $ Active             &lt;dbl&gt; 3, 33, 78, 129, 135, 135, 135, 168, 168, 168, 174,…
+## $ `WHO Region`       &lt;chr&gt; &quot;Eastern Mediterranean&quot;, &quot;Eastern Mediterranean&quot;, …
+## $ Year               &lt;dbl&gt; 2016, 2016, 2016, 2016, 2016, 2016, 2016, 2016, 20…
+## $ `Mean Obesity (%)` &lt;dbl&gt; 38.33333, 38.33333, 38.33333, 38.33333, 38.33333, …</code></pre>
+<pre class="r"><code>joined3 %&gt;% group_by(Date) %&gt;% summarize_if(is.numeric, 
+    n_distinct)</code></pre>
+<pre><code>## # A tibble: 188 x 7
+##    Date       Confirmed Deaths Recovered Active  Year `Mean Obesity (%)`
+##    &lt;date&gt;         &lt;int&gt;  &lt;int&gt;     &lt;int&gt;  &lt;int&gt; &lt;int&gt;              &lt;int&gt;
+##  1 2020-01-22         3      2         2      3     1                  4
+##  2 2020-01-23         4      2         2      4     1                  5
+##  3 2020-01-24         4      2         2      4     1                  6
+##  4 2020-01-25         5      2         2      5     1                  8
+##  5 2020-01-26         6      2         4      6     1                 10
+##  6 2020-01-27         6      2         4      6     1                 13
+##  7 2020-01-28         7      2         4      8     1                 13
+##  8 2020-01-29         8      2         4      8     1                 15
+##  9 2020-01-30        10      2         5      9     1                 17
+## 10 2020-01-31        11      2         5      9     1                 21
+## # … with 178 more rows</code></pre>
+</div>
+<div id="below-i-created-summary-statistics-for-my-numeric-variables.-i-first-summarized-my-data-by-finding-and-displaying-the-mean-and-standard-deviation-for-all-of-the-numeric-values.-this-automatically-grouped-the-data-alphabetically-by-country-which-allows-me-to-see-the-means-and-standard-deviation-of-covid-cases-and-obesity-percentage-per-country.-then-i-chose-to-summarize-my-data-by-finding-the-minimum-median-and-maximum-values-for-the-numeric-variables-after-grouping-by-date.-this-allows-me-to-see-and-compare-the-data-from-january-2020-through-july-of-2020.-i-did-one-more-summarizing-line-of-code-where-i-grouped-by-countryregion-and-who-region-then-found-the-variance-in-the-numeric-covid-variables.-i-thought-it-was-particularly-interesting-to-see-how-the-variance-in-variables-varied-between-different-countries-and-regions.-after-that-i-used-cor-to-show-a-correlation-matrix-of-confirmed-covid-cases-deaths-recovered-cases-active-cases-and-mean-obesity.-this-correlation-matrix-shows-high-correlations-between-the-covid-vairables-especially-confirmed-and-active-cases-0.9497183-as-one-would-expect.-it-also-showed-low-correlation-between-mean-obesity-and-all-of-the-covid-variables." class="section level5">
+<h5>Below, I created summary statistics for my numeric variables. I first summarized my data by finding and displaying the mean and standard deviation for all of the numeric values. This automatically grouped the data alphabetically by country, which allows me to see the means and standard deviation of covid cases and obesity percentage per country. Then, I chose to summarize my data by finding the minimum, median, and maximum values for the numeric variables, after grouping by date. This allows me to see and compare the data from January 2020 through July of 2020. I did one more summarizing line of code, where I grouped by country/region and WHO region, then found the variance in the numeric covid variables. I thought it was particularly interesting to see how the variance in variables varied between different countries and regions. After that, I used cor() to show a correlation matrix of confirmed COVID cases, deaths, recovered cases, active cases, and mean obesity. This correlation matrix shows high correlations between the covid vairables, especially confirmed and active cases (0.9497183), as one would expect. It also showed low correlation between mean obesity and all of the covid variables.</h5>
+<pre class="r"><code>joined3 %&gt;% summarize(mean(Confirmed), sd(Confirmed), 
+    mean(Deaths), sd(Deaths), mean(Recovered), sd(Recovered), 
+    mean(Active), sd(Active), mean(`Mean Obesity (%)`))</code></pre>
+<pre><code>## # A tibble: 166 x 10
+##    `Country/Region` `mean(Confirmed… `sd(Confirmed)` `mean(Deaths)` `sd(Deaths)`
+##    &lt;chr&gt;                       &lt;dbl&gt;           &lt;dbl&gt;          &lt;dbl&gt;        &lt;dbl&gt;
+##  1 Afghanistan               37479.          41610.          950.        1179.  
+##  2 Albania                    4185.           3848.          121.          98.8 
+##  3 Algeria                   22982.          22280.         1519.        1110.  
+##  4 Andorra                    1914.            892.          110.          60.1 
+##  5 Angola                      523.            716.           24.9         30.7 
+##  6 Antigua and Bar…             98.3            72.3           7.14         3.49
+##  7 Argentina                 90830.         129451.         1995.        2325.  
+##  8 Armenia                   31957.          36877.          545.         674.  
+##  9 Australia                 15656.          11805.          186.         146.  
+## 10 Austria                   39643.          19393.         1391.         836.  
+## # … with 156 more rows, and 5 more variables: `mean(Recovered)` &lt;dbl&gt;,
+## #   `sd(Recovered)` &lt;dbl&gt;, `mean(Active)` &lt;dbl&gt;, `sd(Active)` &lt;dbl&gt;,
+## #   `mean(\`Mean Obesity (%)\`)` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>joined3 %&gt;% group_by(Date) %&gt;% summarize(min(Confirmed), 
+    median(Confirmed), max(Confirmed), min(Deaths), 
+    median(Deaths), max(Deaths), min(Active), median(Active), 
+    max(Active))</code></pre>
+<pre><code>## # A tibble: 188 x 10
+##    Date       `min(Confirmed)` `median(Confirm… `max(Confirmed)` `min(Deaths)`
+##    &lt;date&gt;                &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;
+##  1 2020-01-22                3              6               1644             0
+##  2 2020-01-23                3              6               1929             0
+##  3 2020-01-24                6              7.5             2760             0
+##  4 2020-01-25                3              9               4218             0
+##  5 2020-01-26                3             12               6225             0
+##  6 2020-01-27                3             12               8631             0
+##  7 2020-01-28                3             12              16527             0
+##  8 2020-01-29                3             15              18261             0
+##  9 2020-01-30                3             12              24423             0
+## 10 2020-01-31                3             12              29406             0
+## # … with 178 more rows, and 5 more variables: `median(Deaths)` &lt;dbl&gt;,
+## #   `max(Deaths)` &lt;dbl&gt;, `min(Active)` &lt;dbl&gt;, `median(Active)` &lt;dbl&gt;,
+## #   `max(Active)` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>joined3 %&gt;% group_by(`Country/Region`, `WHO Region`) %&gt;% 
+    summarize(var(Confirmed), var(Active), var(Deaths), 
+        var(Recovered))</code></pre>
+<pre><code>## # A tibble: 166 x 6
+## # Groups:   Country/Region [166]
+##    `Country/Region` `WHO Region` `var(Confirmed)` `var(Active)` `var(Deaths)`
+##    &lt;chr&gt;            &lt;chr&gt;                   &lt;dbl&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+##  1 Afghanistan      Eastern Med…      1731431484.    466211368.     1388926. 
+##  2 Albania          Europe              14807757.      2572114.        9764. 
+##  3 Algeria          Africa             496376251.     30354164.     1231058. 
+##  4 Andorra          Europe                795350.       243756.        3615. 
+##  5 Angola           Africa                513279.       242490.         942. 
+##  6 Antigua and Bar… Americas                5230.         1324.          12.2
+##  7 Argentina        Americas         16757572766.   5336663747.     5404467. 
+##  8 Armenia          Europe            1359904706.    193801501.      453844. 
+##  9 Australia        Western Pac…       139358364.     22166876.       21393. 
+## 10 Austria          Europe             376102220.     59107968.      698352. 
+## # … with 156 more rows, and 1 more variable: `var(Recovered)` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>cor_joined3 &lt;- joined3 %&gt;% ungroup() %&gt;% select(-`Country/Region`, 
+    -Date, -Year, -`WHO Region`) %&gt;% cor()
+cor_joined3 %&gt;% glimpse()</code></pre>
+<pre><code>##  num [1:5, 1:5] 1 0.911 0.893 0.95 0.142 ...
+##  - attr(*, &quot;dimnames&quot;)=List of 2
+##   ..$ : chr [1:5] &quot;Confirmed&quot; &quot;Deaths&quot; &quot;Recovered&quot; &quot;Active&quot; ...
+##   ..$ : chr [1:5] &quot;Confirmed&quot; &quot;Deaths&quot; &quot;Recovered&quot; &quot;Active&quot; ...</code></pre>
+</div>
+</div>
+<div id="visualizing" class="section level1">
+<h1>4. Visualizing</h1>
+<div id="i-created-a-heatmap-of-my-previous-correlation-matrix-using-ggcorr.-this-heatmap-shows-that-the-confirmed-covid-19-cases-deaths-recovered-cases-and-active-cases-are-all-highly-correlated.-however-mean-obesity-of-adults-does-not-seem-to-have-any-significant-correlation-with-any-of-the-covid-19-statistics.-i-expected-correlation-between-the-covid-19-variables-since-they-are-all-related-but-i-didnt-expect-much-of-a-correlation-between-mean-obesity-and-these-variables.-even-though-there-was-no-correlation-between-mean-obesity-and-covid-19-case-data-it-was-still-interesting-to-explore-and-to-display-the-data." class="section level5">
+<h5>I created a heatmap of my previous correlation matrix using ggcorr(). This heatmap shows that the confirmed COVID-19 cases, deaths, recovered cases, and active cases are all highly correlated. However, mean obesity of adults does not seem to have any significant correlation with any of the COVID-19 statistics. I expected correlation between the COVID-19 variables, since they are all related, but I didn't expect much of a correlation between mean obesity and these variables. Even though there was no correlation between mean obesity and COVID-19 case data, it was still interesting to explore and to display the data.</h5>
+<pre class="r"><code>cor_joined3 %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;Variable_1&quot;) %&gt;% 
+    pivot_longer(-1, names_to = &quot;Variable_2&quot;, values_to = &quot;Correlation&quot;) %&gt;% 
+    ggplot(aes(x = Variable_1, y = Variable_2, fill = Correlation)) + 
+    geom_tile() + scale_fill_gradient(low = &quot;red&quot;, 
+    high = &quot;blue&quot;) + geom_text(aes(label = round(Correlation, 
+    2)), color = &quot;white&quot;, size = 4) + theme(axis.text.x = element_text(angle = 90, 
+    hjust = 1)) + coord_fixed() + ggtitle(&quot;Correlation Heatmap&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-6-1.png" width="1440" style="display: block; margin: auto;" /></p>
+</div>
+<div id="below-i-creates-a-scatterplot-of-maximum-confirmed-covid-19-cases-per-country-and-mean-obesity-in-adults-per-country.-there-were-a-lot-of-countries-in-my-dataset-so-instead-of-coloring-the-data-points-by-country-i-colored-them-by-who-region-which-will-still-allow-me-to-see-the-data-grouped-by-location.-this-graph-is-interesting-because-you-can-see-the-mean-obesity-and-confirmed-cases-in-countries-grouped-by-their-world-health-organization-region.-for-example-you-can-see-that-african-countries-are-generally-located-on-the-left-side-of-the-graph-with-lower-mean-obesities-in-adults-and-with-most-of-their-confirmed-covid-19-cases-between-1000-and-100000.-the-americas-and-europe-on-the-other-hand-have-higher-mean-obesities-than-africa-and-more-spread-out-values-of-maximum-number-of-covid-19-cases-along-the-y-axis-per-country.-south-east-asia-countries-also-have-low-mean-obesities-like-africa-but-have-a-greater-range-in-maximum-confirmed-covid-19-cases." class="section level5">
+<h5>Below, I creates a scatterplot of maximum confirmed COVID-19 cases per country and mean obesity (%) in adults per country. There were a lot of countries in my dataset, so instead of coloring the data points by country, I colored them by WHO Region, which will still allow me to see the data grouped by location. This graph is interesting because you can see the mean obesity and confirmed cases in countries, grouped by their World Health Organization region. For example, you can see that African countries are generally located on the left side of the graph, with lower mean obesities in adults and with most of their confirmed COVID-19 cases between 1,000 and 100,000. The Americas and Europe, on the other hand, have higher mean obesities than Africa and more spread out values of maximum number of COVID-19 cases along the y-axis per country. South-East Asia countries also have low mean obesities like Africa, but have a greater range in maximum confirmed COVID-19 cases.</h5>
+<pre class="r"><code>joined3 %&gt;% group_by(`Country/Region`, `Mean Obesity (%)`, 
+    `WHO Region`) %&gt;% summarize(max_confirmed = max(Confirmed)) %&gt;% 
+    ggplot(aes(x = `Mean Obesity (%)`, y = max_confirmed, 
+        color = `WHO Region`)) + geom_point(size = 1.5) + 
+    theme(legend.position = &quot;right&quot;) + ylab(&quot;Maximum Confirmed COVID Cases (log scaled)&quot;) + 
+    xlab(&quot;Mean Obesity of Adults (%)&quot;) + scale_y_log10() + 
+    scale_x_continuous(breaks = seq(4, 40, 5)) + theme_light() + 
+    ggtitle(&quot;Mean Obesity and Max COVID-19 Cases by WHO Region&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-7-1.png" width="1440" style="display: block; margin: auto;" /></p>
+</div>
+<div id="i-created-a-bar-plot-below-of-the-deaths-by-covid-19-per-countryregion-and-colored-the-bars-by-who-region.-then-i-used-facet_wrap-to-display-the-data-by-month-of-2020.-i-wanted-to-see-the-difference-in-countries-deaths-due-to-covid-across-the-months-of-2020.-according-to-the-graph-countries-in-the-americas-seem-to-have-higher-death-counts-with-countries-in-europe-having-the-next-highest.-by-looking-at-the-earlier-months-such-as-february-and-march-one-can-see-which-countries-gained-the-most-covid-19-deaths-first.-for-example-the-only-country-with-deaths-over-2700-in-february-was-china-which-is-shown-by-the-pink-bar.-in-march-a-few-other-countries-appear-to-have-more-than-2700-deaths-including-france-iran-italy-spain-and-the-us." class="section level5">
+<h5>I created a bar plot below of the deaths by COVID-19 per country/region, and colored the bars by WHO Region. Then, I used facet_wrap() to display the data by month of 2020. I wanted to see the difference in countries' deaths due to COVID across the months of 2020. According to the graph, countries in the Americas seem to have higher death counts, with countries in Europe having the next highest. By looking at the earlier months, such as February and March, one can see which countries gained the most COVID-19 deaths first. For example, the only country with deaths over 2700 in February was China, which is shown by the pink bar. In March, a few other countries appear to have more than 2700 deaths, including France, Iran, Italy, Spain, and the US.</h5>
+<pre class="r"><code>joined %&gt;% group_by(`Country/Region`) %&gt;% filter(Deaths &gt; 
+    2700) %&gt;% separate(Date, into = c(&quot;Year&quot;, &quot;Month&quot;, 
+    &quot;Day&quot;), sep = &quot;-&quot;) %&gt;% separate(Month, into = c(&quot;x&quot;, 
+    &quot;month&quot;), sep = 1) %&gt;% select(-x) %&gt;% ggplot(aes(`Country/Region`, 
+    Deaths, fill = `WHO Region`)) + geom_bar(stat = &quot;summary&quot;, 
+    fun = mean) + theme(axis.text.x = element_text(angle = 45, 
+    hjust = 1), legend.position = &quot;right&quot;) + ggtitle(&quot;COVID-19 Deaths by Country per Month&quot;) + 
+    scale_y_log10() + geom_errorbar(stat = &quot;summary&quot;, 
+    fun.data = mean_se) + facet_wrap(~month)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-8-1.png" width="1440" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="clustering" class="section level1">
+<h1>5. Clustering</h1>
+<div id="below-i-performed-pam-clustering-and-created-a-plot-to-display-the-clustering.-i-created-a-dataset-called-joined_clustering-with-5-numeric-variables-that-are-the-means-of-existing-variables-and-scaled-the-numeric-variables.-then-i-converted-the-standard-deviations-to-eigenvalues-and-found-the-proportion-of-variance-explained-by-the-principle-components.-i-created-a-plot-to-display-the-results-of-this-analysis-which-shows-proportion-of-variance-on-the-y-axis-explained-by-each-principle-component-on-the-x-axis.-the-proportion-explained-by-principle-component-1-is-0.73-the-proportion-explained-by-pc2-is-0.19-and-the-proportions-explained-by-pc3-and-4-are-0.06-and-0.02.-the-sum-of-the-proportion-of-variance-of-principle-components-1-and-2-was-over-0.8-so-i-chose-to-use-these-two-principle-components-to-create-a-dataframe-of-and-plot-scores.-from-looking-at-the-summary-pc1-has-all-similar-strengths-and-magnitudes-and-a-low-score-on-pc2-means-a-high-mean-obesity.-in-the-graph-the-points-seem-to-be-spread-out-a-lot-more-along-pc2-with-points-lower-on-pc2-having-higher-mean-obesities." class="section level5">
+<h5>Below, I performed PAM clustering and created a plot to display the clustering. I created a dataset called joined_clustering with 5 numeric variables that are the means of existing variables and scaled the numeric variables. Then, I converted the standard deviations to eigenvalues and found the proportion of variance explained by the principle components. I created a plot to display the results of this analysis, which shows proportion of variance on the y-axis explained by each principle component on the x axis. The proportion explained by principle component 1 is 0.73, the proportion explained by PC2 is 0.19, and the proportions explained by PC3 and 4 are 0.06 and 0.02. The sum of the proportion of variance of principle components 1 and 2 was over 0.8, so I chose to use these two principle components to create a dataframe of and plot scores. From looking at the summary, PC1 has all similar strengths and magnitudes, and a low score on PC2 means a high mean obesity. In the graph, the points seem to be spread out a lot more along PC2, with points lower on PC2 having higher mean obesities.</h5>
+<pre class="r"><code>joined_clustering &lt;- joined3 %&gt;% group_by(`Country/Region`) %&gt;% 
+    summarize(meanconfirmed = mean(Confirmed), meandeaths = mean(Deaths), 
+        meanrecovered = mean(Recovered), meanactive = mean(Active), 
+        meanobesity = mean(`Mean Obesity (%)`))
+joined_clustering %&gt;% head()</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##   `Country/Region` meanconfirmed meandeaths meanrecovered meanactive meanobesity
+##   &lt;chr&gt;                    &lt;dbl&gt;      &lt;dbl&gt;         &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;
+## 1 Afghanistan            37479.      950.         15450.     21078.         5.43
+## 2 Albania                 4185.      121.          2529.      1534.        21   
+## 3 Algeria                22982.     1519.         14725.      6738.        26.7 
+## 4 Andorra                 1914.      110.          1400.       404.        25   
+## 5 Angola                   523.       24.9          152.       346.         8.07
+## 6 Antigua and Bar…          98.3       7.14          56.9       34.2       18</code></pre>
+<pre class="r"><code>a &lt;- joined_clustering %&gt;% ungroup() %&gt;% mutate_if(is.character, 
+    as.factor) %&gt;% select_if(is.numeric) %&gt;% scale
+rownames(a) &lt;- joined_clustering$&quot;Country/Region&quot;
+pca &lt;- princomp(a)
+names(pca)</code></pre>
+<pre><code>## [1] &quot;sdev&quot;     &quot;loadings&quot; &quot;center&quot;   &quot;scale&quot;    &quot;n.obs&quot;    &quot;scores&quot;   &quot;call&quot;</code></pre>
+<pre class="r"><code>summary(pca, loadings = T)</code></pre>
+<pre><code>## Importance of components:
+##                          Comp.1    Comp.2     Comp.3     Comp.4       Comp.5
+## Standard deviation     1.905577 0.9675645 0.54063628 0.33194634 1.645452e-08
+## Proportion of Variance 0.730646 0.1883710 0.05881181 0.02217124 5.447843e-17
+## Cumulative Proportion  0.730646 0.9190170 0.97782876 1.00000000 1.000000e+00
+## 
+## Loadings:
+##               Comp.1 Comp.2 Comp.3 Comp.4 Comp.5
+## meanconfirmed  0.519                0.279  0.804
+## meandeaths     0.496        -0.288 -0.816       
+## meanrecovered  0.467         0.824        -0.314
+## meanactive     0.495        -0.488  0.506 -0.504
+## meanobesity    0.147 -0.989</code></pre>
+<pre class="r"><code>eigval &lt;- pca$sdev^2
+varprop = round(eigval/sum(eigval), 2)
+
+ggplot() + geom_bar(aes(y = varprop, x = 1:5), stat = &quot;identity&quot;) + 
+    xlab(&quot;Principle Component&quot;) + geom_path(aes(y = varprop, 
+    x = 1:5)) + geom_text(aes(x = 1:5, y = varprop, 
+    label = round(varprop, 2)), vjust = 1, col = &quot;white&quot;, 
+    size = 5) + scale_y_continuous(breaks = seq(0, 
+    0.6, 0.2), labels = scales::percent) + scale_x_continuous(breaks = 1:10) + 
+    ggtitle(&quot;Principal Component Analysis&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-9-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>dataframe &lt;- data.frame(PC1 = pca$scores[, 1], PC2 = pca$scores[, 
+    2]) %&gt;% rownames_to_column(&quot;Country/Region&quot;)
+dataframe %&gt;% ggplot(aes(PC1, PC2)) + geom_point()</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-9-2.png" width="1440" style="display: block; margin: auto;" /></p>
+<p>Note that the <code>echo = FALSE</code> parameter was added to the code chunk to prevent printing of the R code that generated the plot.</p>
+</div>
 </div>
 
             
