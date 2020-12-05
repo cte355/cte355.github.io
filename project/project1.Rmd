@@ -148,6 +148,3 @@ dataframe <- data.frame(PC1=pca$scores[,1], PC2=pca$scores[,2]) %>% rownames_to_
 dataframe %>% ggplot(aes(PC1,PC2)) + geom_point() 
 ```
 
-
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
