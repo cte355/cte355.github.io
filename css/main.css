@@ -1,10 +1,10 @@
 /* Main page with stikky-footer */
 html, body {
   height: 100%;
-  background-color: #fff;
+  background-color: #e8e2d3;
   font-family: 'Source Sans Pro', sans-serif;
   /* The html and body elements cannot have any padding or margin. */
-  border-top: 2px solid #7ea371;
+  border-top: 4px solid #7ea371;
 }
 
 /* Wrapper for page content to push down footer */
@@ -23,8 +23,8 @@ html, body {
   margin-bottom: 10px;
 }
 .navbar-default {
-  background-color: #ffffff;
-  border-color: #ffffff;
+  background-color: #e8e2d3;
+  border-color: #e8e2d3;
 }
 .navbar-default .navbar-brand {
   color: #6b6b6b;
@@ -43,17 +43,17 @@ html, body {
 }
 .navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active > a:hover, .navbar-default .navbar-nav > .active > a:focus {
   color: #6b6b6b;
-  background-color: #ffffff;
+  background-color: #e8e2d3;
 }
 .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:hover, .navbar-default .navbar-nav > .open > a:focus {
   color: #6b6b6b;
-  background-color: #ffffff;
+  background-color: #e8e2d3;
 }
 .navbar-default .navbar-toggle {
-  border-color: #ffffff;
+  border-color: #e8e2d3;
 }
 .navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus {
-  background-color: #ffffff;
+  background-color: #e8e2d3;
 }
 .navbar-default .navbar-toggle .icon-bar {
   background-color: #6b6b6b;
@@ -77,7 +77,7 @@ html, body {
   }
   .navbar-default .navbar-nav .open .dropdown-menu > .active > a, .navbar-default .navbar-nav .open .dropdown-menu > .active > a:hover, .navbar-default .navbar-nav .open .dropdown-menu > .active > a:focus {
     color: #6b6b6b;
-    background-color: #ffffff;
+    background-color: #e8e2d3;
   }
 }
 
@@ -189,7 +189,7 @@ html, body {
 	color: #6b6b6b;
 }
 div.footer{
-  border-bottom: 5px solid #7ea371;;
+  border-bottom: 7px solid #7ea371;;
 }
 /* Set the fixed height of the footer here */
 /*.footer {
