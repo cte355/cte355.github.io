@@ -1,0 +1,33 @@
+---
+title: Python
+author: Cassidy Ellis
+date: '2020-12-08'
+slug: python
+categories: []
+tags: []
+description: ''
+---
+
+**Using R and Python Together**
+
+I have previously learned R studio in biostatistics, but the first time I had used Python to code was in computational biology this semester. I was hesitant at first, since I was already comfortable with R, but I quickly warmed up to Python, especially after learning how it can be used in conjunction with R. The two programs can "talk" to one another through reticulate, which allows Python code chunks to be ran in R markdown files.
+
+Below is a R code chunk, where I loaded the reticulate package.
+
+```{R}
+library(reticulate)
+```
+
+This next code chunk, however, contains Python code chunk, which is created using "{python}". I loaded the dataset "quakes" and found the median magnitude of earthquakes when the longitude is greater than 175, all while using python code in a R markdown file.
+
+```{python}
+import pandas as pd
+quakes=pd.read_csv("https://vincentarelbundock.github.io/Rdatasets/csv/datasets/quakes.csv",index_col=0)
+
+import numpy as np
+np.median(quakes[quakes.long>175].mag)
+```
+
+![](/img/meme.jpeg)
+
+
